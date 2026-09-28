@@ -192,6 +192,59 @@
             </div>
         </div>
     </div>
+<!-- 자바스크립트 연동 코드 -->
+    <script>
+        // ⚠️ 본인의 실제 Render 백엔드 주소로 변경하세요! (끝에 /는 뺍니다)
+        const RENDER_SERVER_URL = "https://your-app-name.onrender.com"; 
 
+        const fetchBtn = document.getElementById('fetchBtn');
+        const statusMsg = document.getElementById('statusMsg');
+        const interpretation = document.getElementById('interpretation');
+        const questions = document.getElementById('questions');
+        const prayer = document.getElementById('prayer');
+
+        fetchBtn.addEventListener('click', async () => {
+            // 1. 버튼 클릭 시 로딩 상태 표시
+            fetchBtn.disabled = true;
+            fetchBtn.style.opacity = "0.7";
+            statusMsg.innerText = "⏳ 말씀과 묵상을 불러오는 중입니다... (약 5~10초 소요)";
+
+            try {
+                // 2. Render 백엔드 API 호출
+                const response = await fetch(`${RENDER_SERVER_URL}/api/daily-qt`);
+                
+                if (!response.ok) {
+                    throw new Error(`서버 응답 에러: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // 3. 받아온 데이터 화면에 출력
+                statusMsg.innerText = `📖 ${data.reference}`;
+                
+                // 질문(배열) 줄바꿈 처리
+                let questionText = "";
+                if (Array.isArray(data.questions)) {
+                    questionText = data.questions.map((q, idx) => `${idx + 1}. ${q}`).join("\n\n");
+                } else {
+                    questionText = data.questions;
+                }
+
+                interpretation.innerText = data.exposition || "해석 내용을 불러오지 못했습니다.";
+                questions.innerText = questionText || "질문 내용을 불러오지 못했습니다.";
+                prayer.innerText = data.prayer || "기도문 내용을 불러오지 못했습니다.";
+
+            } catch (error) {
+                console.error("Fetch Error:", error);
+                statusMsg.innerText = "❌ 불러오기에 실패했습니다. Render 서버 주소 및 서버 상태를 확인해주세요.";
+            } finally {
+                // 4. 버튼 상태 복구
+                fetchBtn.disabled = false;
+                fetchBtn.style.opacity = "1";
+            }
+        });
+    </script>
+</body>
+</html>
 </body>
 </html>

@@ -236,6 +236,8 @@
                     questionText = data.questions;
                 }
 
+                verse.innerText = data.verse || "성경 본문을 불러오지 못했습니다.";
+                
                 interpretation.innerText = data.exposition || "해석 내용을 불러오지 못했습니다.";
                 questions.innerText = questionText || "질문 내용을 불러오지 못했습니다.";
                 prayer.innerText = data.prayer || "기도문 내용을 불러오지 못했습니다.";

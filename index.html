@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>오늘의 성경 QT</title>
-    <!-- 구글 폰트 (Pretendard 스타일의 깔끔한 Noto Sans) -->
+    <!-- 구글 폰트 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -160,21 +160,12 @@
             <p class="description">오늘 나에게 주시는 말씀과<br>삶을 정돈하는 묵상</p>
         </div>
 
-        
         <!-- 검색 입력 영역 -->
         <div class="search-area" style="margin-bottom: 12px; display: flex; gap: 8px;">
             <input type="text" id="topicInput" placeholder="예: 직장이 힘들 때, 마음이 불안할 때" 
                    style="flex: 1; padding: 14px; border-radius: 12px; border: 1px solid #D1D5DB; font-size: 14px; outline: none;">
         </div>
 
-        <!-- 버튼 영역 -->
-        <div class="action-area">
-            <button class="btn-fetch" id="fetchBtn">
-                📖 말씀 및 묵상 불러오기
-            </button>
-        </div>
-
-        
         <!-- 버튼 영역 -->
         <div class="action-area">
             <button class="btn-fetch" id="fetchBtn">
@@ -191,7 +182,6 @@
 
         <!-- 결과 카드 영역 -->
         <div class="content-section" id="resultArea">
-            <!-- 말씀 해석 위에 성경 본문 카드 추가 -->
             <div class="card">
                 <div class="card-title">📖 성경 본문</div>
                 <div class="card-body" id="verse">버튼을 누르면 오늘의 성경 말씀이 여기에 출력됩니다.</div>
@@ -212,28 +202,34 @@
                 <div class="card-body" id="prayer">본문 내용이 여기에 표시됩니다.</div>
             </div>
         </div>
-<!-- 자바스크립트 연동 코드 -->
+    </div>
+
+    <!-- 자바스크립트 연동 코드 -->
     <script>
         // ⚠️ 본인의 실제 Render 백엔드 주소로 변경하세요! (끝에 /는 뺍니다)
         const RENDER_SERVER_URL = "https://my-qt-backend.onrender.com"; 
 
         const fetchBtn = document.getElementById('fetchBtn');
-        const topicInput = document.getElementById('topicInput'); // ⬅️ 추가
+        const topicInput = document.getElementById('topicInput');
         const statusMsg = document.getElementById('statusMsg');
-        const verse = document.getElementById('verse'); // ⬅️ 추가
+        const verse = document.getElementById('verse');
         const interpretation = document.getElementById('interpretation');
         const questions = document.getElementById('questions');
         const prayer = document.getElementById('prayer');
 
         fetchBtn.addEventListener('click', async () => {
-            // 1. 버튼 클릭 시 로딩 상태 표시
+            const topic = topicInput.value.trim();
+
             fetchBtn.disabled = true;
             fetchBtn.style.opacity = "0.7";
-            statusMsg.innerText = "⏳ 말씀과 묵상을 불러오는 중입니다... (약 5~10초 소요)";
+            statusMsg.innerText = topic ? `⏳ '${topic}' 관련 말씀을 찾는 중...` : "⏳ 말씀과 묵상을 불러오는 중입니다... (약 5~10초 소요)";
 
             try {
-                // 2. Render 백엔드 API 호출
-                const response = await fetch(`${RENDER_SERVER_URL}/api/daily-qt`);
+                const url = topic 
+                    ? `${RENDER_SERVER_URL}/api/daily-qt?topic=${encodeURIComponent(topic)}`
+                    : `${RENDER_SERVER_URL}/api/daily-qt`;
+
+                const response = await fetch(url);
                 
                 if (!response.ok) {
                     throw new Error(`서버 응답 에러: ${response.status}`);
@@ -241,20 +237,17 @@
 
                 const data = await response.json();
 
-                // 3. 받아온 데이터 화면에 출력
+                // 화면 출력
                 statusMsg.innerText = `📖 ${data.reference}`;
+                verse.innerText = data.verse || "성경 본문을 불러오지 못했습니다.";
+                interpretation.innerText = data.exposition || "해석 내용을 불러오지 못했습니다.";
                 
-                // 질문(배열) 줄바꿈 처리
                 let questionText = "";
                 if (Array.isArray(data.questions)) {
                     questionText = data.questions.map((q, idx) => `${idx + 1}. ${q}`).join("\n\n");
                 } else {
                     questionText = data.questions;
                 }
-
-                verse.innerText = data.verse || "성경 본문을 불러오지 못했습니다.";
-                
-                interpretation.innerText = data.exposition || "해석 내용을 불러오지 못했습니다.";
                 questions.innerText = questionText || "질문 내용을 불러오지 못했습니다.";
                 prayer.innerText = data.prayer || "기도문 내용을 불러오지 못했습니다.";
 
@@ -262,13 +255,10 @@
                 console.error("Fetch Error:", error);
                 statusMsg.innerText = "❌ 불러오기에 실패했습니다. Render 서버 주소 및 서버 상태를 확인해주세요.";
             } finally {
-                // 4. 버튼 상태 복구
                 fetchBtn.disabled = false;
                 fetchBtn.style.opacity = "1";
             }
         });
     </script>
-</body>
-</html>
 </body>
 </html>

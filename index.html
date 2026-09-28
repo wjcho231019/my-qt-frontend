@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>매일 성경 QT</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f4f6f8;
+      color: #333;
+    }
+    .header { text-align: center; margin-bottom: 30px; }
+    .header h1 { font-size: 26px; color: #2c3e50; margin-bottom: 8px; }
+    .btn-qt {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #fff;
+      background-color: #3498db;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: background 0.2s;
+    }
+    .btn-qt:hover { background-color: #2980b9; }
+    .loading {
+      display: none;
+      text-align: center;
+      margin-top: 30px;
+      font-weight: bold;
+      color: #7f8c8d;
+    }
+    .card {
+      display: none;
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 25px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .reference { font-size: 22px; font-weight: bold; color: #2c3e50; margin-bottom: 15px; }
+    .verse-box {
+      background-color: #f8f9fa;
+      border-left: 4px solid #3498db;
+      padding: 15px;
+      border-radius: 4px;
+      white-space: pre-line;
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+    .section-title { font-size: 16px; font-weight: bold; color: #3498db; margin-top: 20px; margin-bottom: 8px; }
+    .exposition { line-height: 1.7; color: #444; }
+    ul.questions { padding-left: 20px; margin: 5px 0; line-height: 1.6; }
+    .prayer { background: #fdfaf7; border: 1px solid #f3e5d8; padding: 15px; border-radius: 8px; font-style: italic; line-height: 1.7; color: #555; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>📖 오늘의 성경 QT</h1>
+    <p>오늘 나에게 주시는 말씀과 묵상</p>
+  </div>
+
+  <button class="btn-qt" onclick="getDailyQT()">🎲 오늘의 말씀 읽기</button>
+
+  <div id="loading" class="loading">
+    ⏳ 파이썬 백엔드가 성경 구절을 뽑고 AI가 묵상을 생성 중입니다...<br>
+    <small>(서버 상황에 따라 5~10초 소요될 수 있습니다)</small>
+  </div>
+
+  <div id="result-card" class="card">
+    <div class="reference" id="reference"></div>
+    <div class="verse-box" id="verse"></div>
+
+    <div class="section-title">💡 말씀 해석</div>
+    <div class="exposition" id="exposition"></div>
+
+    <div class="section-title">❓ 오늘 삶에 던지는 질문 2가지</div>
+    <ul class="questions" id="questions"></ul>
+
+    <div class="section-title">🙏 오늘의 마무리 기도</div>
+    <div class="prayer" id="prayer"></div>
+  </div>
+
+  <script>
+    const BACKEND_URL = "https://my-qt-backend.onrender.com/api/daily-qt";
+
+    async function getDailyQT() {
+      const loadingEl = document.getElementById('loading');
+      const cardEl = document.getElementById('result-card');
+
+      loadingEl.style.display = 'block';
+      cardEl.style.display = 'none';
+
+      try {
+        const response = await fetch(BACKEND_URL);
+        const data = await response.json();
+
+        document.getElementById('reference').innerText = data.reference;
+        document.getElementById('verse').innerText = data.verse;
+        document.getElementById('exposition').innerText = data.exposition;
+
+        const qList = document.getElementById('questions');
+        qList.innerHTML = '';
+        data.questions.forEach(q => {
+          const li = document.createElement('li');
+          li.innerText = q;
+          qList.appendChild(li);
+        });
+
+        document.getElementById('prayer').innerText = data.prayer;
+
+        loadingEl.style.display = 'none';
+        cardEl.style.display = 'block';
+      } catch (err) {
+        alert('말씀을 불러오는데 실패했습니다. 잠시 후 다시 시도해주세요.');
+        loadingEl.style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>

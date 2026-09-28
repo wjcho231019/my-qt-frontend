@@ -160,6 +160,21 @@
             <p class="description">오늘 나에게 주시는 말씀과<br>삶을 정돈하는 묵상</p>
         </div>
 
+        
+        <!-- 검색 입력 영역 -->
+        <div class="search-area" style="margin-bottom: 12px; display: flex; gap: 8px;">
+            <input type="text" id="topicInput" placeholder="예: 직장이 힘들 때, 마음이 불안할 때" 
+                   style="flex: 1; padding: 14px; border-radius: 12px; border: 1px solid #D1D5DB; font-size: 14px; outline: none;">
+        </div>
+
+        <!-- 버튼 영역 -->
+        <div class="action-area">
+            <button class="btn-fetch" id="fetchBtn">
+                📖 말씀 및 묵상 불러오기
+            </button>
+        </div>
+
+        
         <!-- 버튼 영역 -->
         <div class="action-area">
             <button class="btn-fetch" id="fetchBtn">
@@ -203,6 +218,7 @@
         const RENDER_SERVER_URL = "https://my-qt-backend.onrender.com"; 
 
         const fetchBtn = document.getElementById('fetchBtn');
+        const topicInput = document.getElementById('topicInput'); // ⬅️ 추가
         const statusMsg = document.getElementById('statusMsg');
         const verse = document.getElementById('verse'); // ⬅️ 추가
         const interpretation = document.getElementById('interpretation');

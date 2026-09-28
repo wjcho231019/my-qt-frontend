@@ -176,6 +176,12 @@
 
         <!-- 결과 카드 영역 -->
         <div class="content-section" id="resultArea">
+            <!-- 말씀 해석 위에 성경 본문 카드 추가 -->
+            <div class="card">
+                <div class="card-title">📖 성경 본문</div>
+                <div class="card-body" id="verse">버튼을 누르면 오늘의 성경 말씀이 여기에 출력됩니다.</div>
+            </div>
+
             <div class="card">
                 <div class="card-title">💡 말씀 해석</div>
                 <div class="card-body" id="interpretation">본문 내용이 여기에 표시됩니다.</div>
@@ -191,7 +197,6 @@
                 <div class="card-body" id="prayer">본문 내용이 여기에 표시됩니다.</div>
             </div>
         </div>
-    </div>
 <!-- 자바스크립트 연동 코드 -->
     <script>
         // ⚠️ 본인의 실제 Render 백엔드 주소로 변경하세요! (끝에 /는 뺍니다)
@@ -199,6 +204,7 @@
 
         const fetchBtn = document.getElementById('fetchBtn');
         const statusMsg = document.getElementById('statusMsg');
+        const verse = document.getElementById('verse'); // ⬅️ 추가
         const interpretation = document.getElementById('interpretation');
         const questions = document.getElementById('questions');
         const prayer = document.getElementById('prayer');

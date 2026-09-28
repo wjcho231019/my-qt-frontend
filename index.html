@@ -3,126 +3,177 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>매일 성경 QT</title>
+  <title>오늘의 성경 QT</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+  <!-- Google Fonts: Noto Sans KR -->
+  <link rel="preconnect" href="[https://fonts.googleapis.com](https://fonts.googleapis.com)">
+  <link rel="preconnect" href="[https://fonts.gstatic.com](https://fonts.gstatic.com)" crossorigin>
+  <link href="[https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap](https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap)" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; }
     body {
-      font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
-      max-width: 640px;
-      margin: 0 auto;
-      padding: 20px;
-      background-color: #f4f6f8;
-      color: #333;
+      font-family: 'Noto Sans KR', sans-serif;
     }
-    .header { text-align: center; margin-bottom: 30px; }
-    .header h1 { font-size: 26px; color: #2c3e50; margin-bottom: 8px; }
-    .btn-qt {
-      display: block;
-      width: 100%;
-      padding: 16px;
-      font-size: 18px;
-      font-weight: bold;
-      color: #fff;
-      background-color: #3498db;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      transition: background 0.2s;
-    }
-    .btn-qt:hover { background-color: #2980b9; }
-    .loading {
-      display: none;
-      text-align: center;
-      margin-top: 30px;
-      font-weight: bold;
-      color: #7f8c8d;
-    }
-    .card {
-      display: none;
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 24px;
-      margin-top: 25px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    }
-    .reference { font-size: 22px; font-weight: bold; color: #2c3e50; margin-bottom: 15px; }
-    .verse-box {
-      background-color: #f8f9fa;
-      border-left: 4px solid #3498db;
-      padding: 15px;
-      border-radius: 4px;
-      white-space: pre-line;
-      line-height: 1.7;
-      margin-bottom: 20px;
-    }
-    .section-title { font-size: 16px; font-weight: bold; color: #3498db; margin-top: 20px; margin-bottom: 8px; }
-    .exposition { line-height: 1.7; color: #444; }
-    ul.questions { padding-left: 20px; margin: 5px 0; line-height: 1.6; }
-    .prayer { background: #fdfaf7; border: 1px solid #f3e5d8; padding: 15px; border-radius: 8px; font-style: italic; line-height: 1.7; color: #555; }
   </style>
 </head>
-<body>
+<body class="bg-slate-50 text-slate-800 min-h-screen pb-16 flex flex-col items-center">
 
-  <div class="header">
-    <h1>📖 오늘의 성경 QT</h1>
-    <p>오늘 나에게 주시는 말씀과 묵상</p>
-  </div>
+  <!-- Header Section -->
+  <header class="w-full max-w-2xl px-6 pt-10 pb-6 text-center">
+    <span class="inline-block text-xs font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full mb-3 border border-indigo-100">
+      Daily Bible Devotional
+    </span>
+    <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight sm:text-4xl">
+      오늘의 성경 QT
+    </h1>
+    <p class="mt-2 text-sm text-slate-500">
+      오늘 나에게 주시는 말씀과 삶을 정돈하는 묵상
+    </p>
+  </header>
 
-  <button class="btn-qt" onclick="getDailyQT()">🎲 오늘의 말씀 읽기</button>
+  <!-- Main Container -->
+  <main class="w-full max-w-2xl px-4 sm:px-6 flex-1 flex flex-col items-center">
+    
+    <!-- Action Button -->
+    <button id="fetchBtn" onclick="loadQT()" class="w-full py-4 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-semibold shadow-md shadow-indigo-100 transition-all duration-200 flex items-center justify-center space-x-2 group">
+      <svg class="w-5 h-5 text-indigo-200 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+      </svg>
+      <span class="text-base">오늘의 말씀 읽기</span>
+    </button>
 
-  <div id="loading" class="loading">
-    ⏳ 파이썬 백엔드가 성경 구절을 뽑고 AI가 묵상을 생성 중입니다...<br>
-    <small>(서버 상황에 따라 5~10초 소요될 수 있습니다)</small>
-  </div>
+    <!-- Loading Spinner -->
+    <div id="loading" class="hidden my-12 text-center">
+      <div class="inline-block animate-spin rounded-full h-9 w-9 border-4 border-indigo-600 border-t-transparent"></div>
+      <p class="mt-3 text-sm font-medium text-slate-500">말씀과 묵상을 불러오는 중입니다...</p>
+    </div>
 
-  <div id="result-card" class="card">
-    <div class="reference" id="reference"></div>
-    <div class="verse-box" id="verse"></div>
+    <!-- QT Content Card -->
+    <div id="qtCard" class="hidden mt-6 w-full bg-white rounded-3xl shadow-sm border border-slate-200/80 overflow-hidden transition-all duration-300">
+      
+      <!-- Bible Passage Section -->
+      <div class="p-6 sm:p-8 border-b border-slate-100 bg-gradient-to-b from-indigo-50/40 to-transparent">
+        <div class="flex items-center space-x-2 mb-4">
+          <span id="qtRef" class="bg-indigo-600 text-white text-sm font-bold px-3.5 py-1.5 rounded-xl shadow-sm">
+            <!-- 말씀 구절 위치 -->
+          </span>
+        </div>
+        <div id="qtVerse" class="space-y-3 text-slate-700 leading-relaxed text-sm sm:text-base font-normal">
+          <!-- 절별 성경 본문 -->
+        </div>
+      </div>
 
-    <div class="section-title">💡 말씀 해석</div>
-    <div class="exposition" id="exposition"></div>
+      <div class="p-6 sm:p-8 space-y-8">
+        
+        <!-- 💡 말씀 해석 -->
+        <section class="bg-amber-50/60 rounded-2xl p-5 border border-amber-100/80">
+          <h2 class="text-base font-bold text-amber-900 flex items-center space-x-2 mb-3">
+            <span>💡</span>
+            <span>말씀 해석</span>
+          </h2>
+          <p id="qtExposition" class="text-sm sm:text-base text-amber-950/80 leading-relaxed">
+            <!-- AI 해석 내용 -->
+          </p>
+        </section>
 
-    <div class="section-title">❓ 오늘 삶에 던지는 질문 2가지</div>
-    <ul class="questions" id="questions"></ul>
+        <!-- ❓ 오늘 삶에 던지는 질문 2가지 -->
+        <section>
+          <h2 class="text-base font-bold text-slate-900 flex items-center space-x-2 mb-4">
+            <span>❓</span>
+            <span>오늘 삶에 던지는 질문 2가지</span>
+          </h2>
+          <ul id="qtQuestions" class="space-y-3">
+            <!-- 적용 질문 목록 -->
+          </ul>
+        </section>
 
-    <div class="section-title">🙏 오늘의 마무리 기도</div>
-    <div class="prayer" id="prayer"></div>
-  </div>
+        <!-- 🙏 오늘의 기도 -->
+        <section class="bg-slate-50 rounded-2xl p-5 border border-slate-100">
+          <h2 class="text-base font-bold text-slate-900 flex items-center space-x-2 mb-3">
+            <span>🙏</span>
+            <span>오늘의 마무리 기도</span>
+          </h2>
+          <p id="qtPrayer" class="text-sm sm:text-base text-slate-600 italic leading-relaxed">
+            <!-- 기도문 내용 -->
+          </p>
+        </section>
+
+      </div>
+    </div>
+
+  </main>
 
   <script>
-    const BACKEND_URL = "https://my-qt-backend.onrender.com/api/daily-qt";
+    // 백엔드 Render URL (필요 시 주소 확인)
+    const BACKEND_URL = "[https://my-qt-backend.onrender.com](https://my-qt-backend.onrender.com)"; 
 
-    async function getDailyQT() {
-      const loadingEl = document.getElementById('loading');
-      const cardEl = document.getElementById('result-card');
+    async function loadQT() {
+      const btn = document.getElementById("fetchBtn");
+      const loading = document.getElementById("loading");
+      const card = document.getElementById("qtCard");
 
-      loadingEl.style.display = 'block';
-      cardEl.style.display = 'none';
+      btn.disabled = true;
+      btn.classList.add("opacity-60");
+      loading.classList.remove("hidden");
+      card.classList.add("hidden");
 
       try {
-        const response = await fetch(BACKEND_URL);
-        const data = await response.json();
+        const res = await fetch(`${BACKEND_URL}/api/daily-qt`);
+        const data = await res.json();
 
-        document.getElementById('reference').innerText = data.reference;
-        document.getElementById('verse').innerText = data.verse;
-        document.getElementById('exposition').innerText = data.exposition;
+        // 1. 구절 명칭
+        document.getElementById("qtRef").innerText = data.reference;
 
-        const qList = document.getElementById('questions');
-        qList.innerHTML = '';
-        data.questions.forEach(q => {
-          const li = document.createElement('li');
-          li.innerText = q;
-          qList.appendChild(li);
+        // 2. 본문 (절 단위 깔끔한 뱃지 스타일 분리)
+        const verseContainer = document.getElementById("qtVerse");
+        verseContainer.innerHTML = "";
+        const lines = data.verse.split("\n");
+        lines.forEach(line => {
+          if (line.trim()) {
+            const p = document.createElement("p");
+            p.className = "flex items-start space-x-2.5";
+            
+            const match = line.match(/^(\d+절:)(.*)/);
+            if (match) {
+              p.innerHTML = `<span class="text-indigo-600 font-bold shrink-0 text-xs bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-md mt-0.5">${match[1]}</span> <span class="leading-relaxed">${match[2].trim()}</span>`;
+            } else {
+              p.innerText = line;
+            }
+            verseContainer.appendChild(p);
+          }
         });
 
-        document.getElementById('prayer').innerText = data.prayer;
+        // 3. 말씀 해석
+        document.getElementById("qtExposition").innerText = data.exposition || "해석을 불러올 수 없습니다.";
 
-        loadingEl.style.display = 'none';
-        cardEl.style.display = 'block';
+        // 4. 삶의 적용 질문
+        const questionsList = document.getElementById("qtQuestions");
+        questionsList.innerHTML = "";
+        if (data.questions && Array.isArray(data.questions)) {
+          data.questions.forEach((q, idx) => {
+            const li = document.createElement("li");
+            li.className = "flex items-start space-x-3 bg-slate-50/80 p-4 rounded-xl border border-slate-100";
+            li.innerHTML = `
+              <span class="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center mt-0.5">
+                ${idx + 1}
+              </span>
+              <span class="text-sm sm:text-base text-slate-700 leading-relaxed font-medium">${q}</span>
+            `;
+            questionsList.appendChild(li);
+          });
+        }
+
+        // 5. 마무리 기도
+        document.getElementById("qtPrayer").innerText = data.prayer || "기도문을 불러올 수 없습니다.";
+
+        card.classList.remove("hidden");
       } catch (err) {
-        alert('말씀을 불러오는데 실패했습니다. 잠시 후 다시 시도해주세요.');
-        loadingEl.style.display = 'none';
+        alert("QT 데이터를 불러오는 데 실패했습니다. 잠시 후 다시 시도해 주세요.");
+        console.error(err);
+      } finally {
+        btn.disabled = false;
+        btn.classList.remove("opacity-60");
+        loading.classList.add("hidden");
       }
     }
   </script>

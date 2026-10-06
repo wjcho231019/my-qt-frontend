@@ -106,6 +106,9 @@
 
         .action-area {
             margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
         .btn-fetch {
@@ -138,6 +141,99 @@
             fill: none;
             stroke: currentColor;
             stroke-width: 2;
+        }
+
+        /* 지난 말씀 보기 버튼 */
+        .btn-history {
+            width: 100%;
+            background-color: #FFFFFF;
+            color: var(--primary);
+            border: 1px solid #C7D2FE;
+            padding: 13px 20px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-history:hover {
+            background-color: #EEF2FF;
+            border-color: var(--primary);
+        }
+
+        /* 지난 말씀 목록 */
+        .history-panel {
+            display: none;
+            margin-bottom: 20px;
+            padding: 18px;
+            background-color: #F9FAFB;
+            border: 1px solid #E5E7EB;
+            border-radius: 16px;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .history-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .history-close {
+            border: none;
+            background: none;
+            color: var(--text-sub);
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .history-item {
+            width: 100%;
+            border: 1px solid #E5E7EB;
+            background: #FFFFFF;
+            border-radius: 12px;
+            padding: 13px 14px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+        }
+
+        .history-item:hover {
+            border-color: #C7D2FE;
+            background-color: #EEF2FF;
+        }
+
+        .history-date {
+            display: block;
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-bottom: 4px;
+        }
+
+        .history-reference {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .history-empty {
+            text-align: center;
+            color: var(--text-sub);
+            font-size: 13px;
+            padding: 20px 0;
         }
 
         .status-msg {
@@ -208,6 +304,23 @@
                 </svg>
                 오늘의 말씀 읽기
             </button>
+
+            <button class="btn-history" id="historyBtn">
+                📅 지난 말씀 보기
+            </button>
+        </div>
+
+        <!-- 지난 말씀 목록 -->
+        <div class="history-panel" id="historyPanel">
+            <div class="history-header">
+                <div class="history-title">📅 지난 말씀</div>
+
+                <button class="history-close" id="closeHistoryBtn">
+                    닫기 ✕
+                </button>
+            </div>
+
+            <div class="history-list" id="historyList"></div>
         </div>
 
         <!-- 로딩/상태 메시지 -->
@@ -251,49 +364,325 @@
         const questions = document.getElementById('questions');
         const prayer = document.getElementById('prayer');
 
+        const historyBtn = document.getElementById('historyBtn');
+        const historyPanel = document.getElementById('historyPanel');
+        const historyList = document.getElementById('historyList');
+        const closeHistoryBtn = document.getElementById('closeHistoryBtn');
+
+        const QT_HISTORY_KEY = "dailyQtHistoryV1";
+
+
+        function getKoreaDateKey() {
+            const formatter = new Intl.DateTimeFormat("en-CA", {
+                timeZone: "Asia/Seoul",
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit"
+            });
+
+            const parts = formatter.formatToParts(new Date());
+
+            const year = parts.find(p => p.type === "year").value;
+            const month = parts.find(p => p.type === "month").value;
+            const day = parts.find(p => p.type === "day").value;
+
+            return `${year}-${month}-${day}`;
+        }
+
+
+        function formatDate(dateString) {
+            if (!dateString) {
+                return "";
+            }
+
+            return dateString.replaceAll("-", ".");
+        }
+
+
+        function getQtHistory() {
+            try {
+                const saved = localStorage.getItem(QT_HISTORY_KEY);
+
+                if (!saved) {
+                    return {};
+                }
+
+                const parsed = JSON.parse(saved);
+
+                if (
+                    parsed &&
+                    typeof parsed === "object" &&
+                    !Array.isArray(parsed)
+                ) {
+                    return parsed;
+                }
+
+                return {};
+
+            } catch (error) {
+                console.error("QT History Load Error:", error);
+                return {};
+            }
+        }
+
+
+        function saveDailyQt(data) {
+            if (
+                !data ||
+                !data.date ||
+                !data.reference ||
+                !data.verse
+            ) {
+                return;
+            }
+
+            if (
+                data.reference.includes("오류") ||
+                data.reference.includes("실패")
+            ) {
+                return;
+            }
+
+            try {
+                const history = getQtHistory();
+
+                history[data.date] = {
+                    date: data.date,
+                    reference: data.reference,
+                    verse: data.verse,
+                    exposition: data.exposition || "",
+                    questions: data.questions || [],
+                    prayer: data.prayer || ""
+                };
+
+                localStorage.setItem(
+                    QT_HISTORY_KEY,
+                    JSON.stringify(history)
+                );
+
+            } catch (error) {
+                console.error("QT History Save Error:", error);
+            }
+        }
+
+
+        function getRecentReferences(limit = 30) {
+            const history = getQtHistory();
+
+            return Object.keys(history)
+                .sort()
+                .reverse()
+                .map(date => history[date]?.reference)
+                .filter(Boolean)
+                .slice(0, limit);
+        }
+
+
+        function renderQt(data) {
+            if (data.date) {
+                statusMsg.innerText =
+                    `📅 ${formatDate(data.date)} · 📖 ${data.reference}`;
+            } else {
+                statusMsg.innerText =
+                    `📖 ${data.reference}`;
+            }
+
+            verse.innerText =
+                data.verse ||
+                "성경 본문을 불러오지 못했습니다.";
+
+            interpretation.innerText =
+                data.exposition ||
+                "해석 내용을 불러오지 못했습니다.";
+
+            let questionText = "";
+
+            if (Array.isArray(data.questions)) {
+                questionText = data.questions
+                    .map((q, idx) => `${idx + 1}. ${q}`)
+                    .join("\n\n");
+            } else {
+                questionText = data.questions || "";
+            }
+
+            questions.innerText =
+                questionText ||
+                "질문 내용을 불러오지 못했습니다.";
+
+            prayer.innerText =
+                data.prayer ||
+                "기도문 내용을 불러오지 못했습니다.";
+        }
+
+
+        function renderHistory() {
+            const history = getQtHistory();
+
+            const dates = Object.keys(history)
+                .sort()
+                .reverse();
+
+            historyList.replaceChildren();
+
+            if (dates.length === 0) {
+                const empty = document.createElement("div");
+
+                empty.className = "history-empty";
+                empty.innerText = "아직 저장된 말씀이 없습니다.";
+
+                historyList.appendChild(empty);
+                return;
+            }
+
+            dates.forEach(date => {
+                const data = history[date];
+
+                const button = document.createElement("button");
+
+                button.type = "button";
+                button.className = "history-item";
+
+                const dateText = document.createElement("span");
+
+                dateText.className = "history-date";
+                dateText.innerText = formatDate(date);
+
+                const referenceText = document.createElement("span");
+
+                referenceText.className = "history-reference";
+                referenceText.innerText = data.reference;
+
+                button.appendChild(dateText);
+                button.appendChild(referenceText);
+
+                button.addEventListener("click", () => {
+                    renderQt(data);
+
+                    historyPanel.style.display = "none";
+                    topicInput.value = "";
+
+                    document.getElementById("resultArea").scrollIntoView({
+                        behavior: "smooth",
+                        block: "start"
+                    });
+                });
+
+                historyList.appendChild(button);
+            });
+        }
+
+
+        historyBtn.addEventListener("click", () => {
+            renderHistory();
+
+            historyPanel.style.display = "block";
+
+            historyPanel.scrollIntoView({
+                behavior: "smooth",
+                block: "nearest"
+            });
+        });
+
+
+        closeHistoryBtn.addEventListener("click", () => {
+            historyPanel.style.display = "none";
+        });
+
+
         fetchBtn.addEventListener('click', async () => {
             const topic = topicInput.value.trim();
 
+            /*
+            * 검색어가 없으면 "오늘의 QT"
+            * 오늘 이미 저장된 말씀이 있으면 서버 호출 없이 바로 출력
+            */
+            if (!topic) {
+                const today = getKoreaDateKey();
+                const history = getQtHistory();
+
+                if (history[today]) {
+                    renderQt(history[today]);
+
+                    historyPanel.style.display = "none";
+
+                    return;
+                }
+            }
+
             fetchBtn.disabled = true;
             fetchBtn.style.opacity = "0.7";
-            topLoadingBar.style.display = "block"; // 🟣 클릭 시 상단 보라색 로딩 바 켜기
+            topLoadingBar.style.display = "block";
 
-            statusMsg.innerText = topic ? `⏳ '${topic}' 관련 말씀을 찾는 중...` : "⏳ 말씀과 묵상을 불러오는 중입니다... (약 5~10초 소요)";
+            historyPanel.style.display = "none";
+
+            statusMsg.innerText = topic
+                ? `⏳ '${topic}' 관련 말씀을 찾는 중...`
+                : "⏳ 오늘의 말씀과 묵상을 준비하고 있습니다...";
 
             try {
-                const url = topic 
-                    ? `${RENDER_SERVER_URL}/api/daily-qt?topic=${encodeURIComponent(topic)}`
-                    : `${RENDER_SERVER_URL}/api/daily-qt`;
+                let url;
+
+                /*
+                * 검색어가 있는 경우
+                * 기존 고민/상황 검색 기능
+                */
+                if (topic) {
+                    url =
+                        `${RENDER_SERVER_URL}/api/daily-qt` +
+                        `?topic=${encodeURIComponent(topic)}`;
+                }
+
+                /*
+                * 검색어가 없는 경우
+                * 오늘의 QT
+                */
+                else {
+                    const recentReferences =
+                        getRecentReferences(30);
+
+                    if (recentReferences.length > 0) {
+                        const recentParam =
+                            recentReferences.join("|");
+
+                        url =
+                            `${RENDER_SERVER_URL}/api/daily-qt` +
+                            `?recent=${encodeURIComponent(recentParam)}`;
+                    } else {
+                        url =
+                            `${RENDER_SERVER_URL}/api/daily-qt`;
+                    }
+                }
 
                 const response = await fetch(url);
-                
+
                 if (!response.ok) {
-                    throw new Error(`서버 응답 에러: ${response.status}`);
+                    throw new Error(
+                        `서버 응답 에러: ${response.status}`
+                    );
                 }
 
                 const data = await response.json();
 
-                // 화면 출력
-                statusMsg.innerText = `📖 ${data.reference}`;
-                verse.innerText = data.verse || "성경 본문을 불러오지 못했습니다.";
-                interpretation.innerText = data.exposition || "해석 내용을 불러오지 못했습니다.";
-                
-                let questionText = "";
-                if (Array.isArray(data.questions)) {
-                    questionText = data.questions.map((q, idx) => `${idx + 1}. ${q}`).join("\n\n");
-                } else {
-                    questionText = data.questions;
+                /*
+                * 고민 검색 결과는 저장하지 않고
+                * 오늘의 QT만 히스토리에 저장
+                */
+                if (!topic) {
+                    saveDailyQt(data);
                 }
-                questions.innerText = questionText || "질문 내용을 불러오지 못했습니다.";
-                prayer.innerText = data.prayer || "기도문 내용을 불러오지 못했습니다.";
+
+                renderQt(data);
 
             } catch (error) {
                 console.error("Fetch Error:", error);
-                statusMsg.innerText = "❌ 불러오기에 실패했습니다. Render 서버 주소 및 서버 상태를 확인해주세요.";
+
+                statusMsg.innerText =
+                    "❌ 불러오기에 실패했습니다. Render 서버 주소 및 서버 상태를 확인해주세요.";
+
             } finally {
                 fetchBtn.disabled = false;
                 fetchBtn.style.opacity = "1";
-                topLoadingBar.style.display = "none"; // 🟣 데이터 처리가 끝나면 로딩 바 끄기
+                topLoadingBar.style.display = "none";
             }
         });
     </script>

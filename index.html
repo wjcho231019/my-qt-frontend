@@ -261,9 +261,36 @@
     }
 
     .history-page-info {
-        font-size: 13px;
-        color: var(--text-sub);
+    font-size: 13px;
+    color: var(--text-sub);
+    font-weight: 600;
+    }
+
+    /* 이미지 다운로드 버튼 */
+    .btn-download {
+        width: 100%;
+        background-color: #111827;
+        color: #FFFFFF;
+        border: none;
+        padding: 14px 20px;
+        border-radius: 14px;
+        font-size: 14px;
         font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-top: 14px;
+    }
+
+    .btn-download:hover {
+        opacity: 0.92;
+        transform: translateY(-1px);
+    }
+
+    /* 캡처 대상 영역 */
+    .capture-area {
+        background: #FFFFFF;
+        border-radius: 20px;
+        padding: 4px 0 0 0;
     }
 
         .status-msg {
@@ -353,32 +380,43 @@
             <div class="history-list" id="historyList"></div>
         </div>
 
-        <!-- 로딩/상태 메시지 -->
-        <div class="status-msg" id="statusMsg">버튼을 눌러 오늘의 말씀을 확인하세요.</div>
+        <!-- 캡처 대상 영역 -->
+        <div class="capture-area" id="captureArea">
+            <!-- 로딩/상태 메시지 -->
+            <div class="status-msg" id="statusMsg">버튼을 눌러 오늘의 말씀을 확인하세요.</div>
 
-        <!-- 결과 카드 영역 -->
-        <div class="content-section" id="resultArea">
-            <div class="card">
-                <div class="card-title">📖 성경 본문</div>
-                <div class="card-body" id="verse">버튼을 누르면 오늘의 성경 말씀이 여기에 출력됩니다.</div>
-            </div>
+            <!-- 결과 카드 영역 -->
+            <div class="content-section" id="resultArea">
+                <div class="card">
+                    <div class="card-title">📖 성경 본문</div>
+                    <div class="card-body" id="verse">버튼을 누르면 오늘의 성경 말씀이 여기에 출력됩니다.</div>
+                </div>
 
-            <div class="card">
-                <div class="card-title">💡 말씀 해석</div>
-                <div class="card-body" id="interpretation">본문 내용이 여기에 표시됩니다.</div>
-            </div>
+                <div class="card">
+                    <div class="card-title">💡 말씀 해석</div>
+                    <div class="card-body" id="interpretation">본문 내용이 여기에 표시됩니다.</div>
+                </div>
 
-            <div class="card">
-                <div class="card-title">❓ 오늘 삶에 던지는 질문</div>
-                <div class="card-body" id="questions">본문 내용이 여기에 표시됩니다.</div>
-            </div>
+                <div class="card">
+                    <div class="card-title">❓ 오늘 삶에 던지는 질문</div>
+                    <div class="card-body" id="questions">본문 내용이 여기에 표시됩니다.</div>
+                </div>
 
-            <div class="card">
-                <div class="card-title">🙏 오늘의 마무리 기도</div>
-                <div class="card-body" id="prayer">본문 내용이 여기에 표시됩니다.</div>
+                <div class="card">
+                    <div class="card-title">🙏 오늘의 마무리 기도</div>
+                    <div class="card-body" id="prayer">본문 내용이 여기에 표시됩니다.</div>
+                </div>
             </div>
         </div>
+
+    <button class="btn-download" id="downloadImageBtn">
+        📥 이미지 다운로드 하기
+    </button>
+
     </div>
+
+    <!-- html2canvas 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
     <!-- 자바스크립트 연동 코드 -->
     <script>
@@ -398,6 +436,9 @@
         const historyPanel = document.getElementById('historyPanel');
         const historyList = document.getElementById('historyList');
         const closeHistoryBtn = document.getElementById('closeHistoryBtn');
+
+        const captureArea = document.getElementById('captureArea');
+        const downloadImageBtn = document.getElementById('downloadImageBtn');
 
         const QT_HISTORY_KEY = "dailyQtHistoryV1";
 
@@ -531,13 +572,13 @@
             let questionText = "";
 
             if (Array.isArray(data.questions)) {
-                questionText = data.questions
-                    .slice(0, 2)
-                    .map((q, idx) => `${idx + 1}. ${q}`)
-                    .join("\n\n");
-            } else {
-                questionText = data.questions || "";
-            }
+            questionText = data.questions
+                .slice(0, 2)
+                .map((q, idx) => `${idx + 1}. ${q}`)
+                .join("\n\n");
+        } else {
+            questionText = data.questions || "";
+        }
 
             questions.innerText =
                 questionText ||
@@ -788,6 +829,41 @@
                 fetchBtn.disabled = false;
                 fetchBtn.style.opacity = "1";
                 topLoadingBar.style.display = "none";
+            }
+        });
+
+        downloadImageBtn.addEventListener("click", async () => {
+            try {
+                downloadImageBtn.disabled = true;
+                downloadImageBtn.innerText = "⏳ 이미지 만드는 중...";
+
+                historyPanel.style.display = "none";
+
+                const statusText = statusMsg.innerText || "";
+                const safeTitle = statusText
+                    .replace(/[\\/:*?"<>|]/g, "")
+                    .replace(/\s+/g, "_")
+                    .slice(0, 40);
+
+                const canvas = await html2canvas(captureArea, {
+                    backgroundColor: "#ffffff",
+                    scale: 2,
+                    useCORS: true
+                });
+
+                const link = document.createElement("a");
+                link.download = safeTitle
+                    ? `${safeTitle}.png`
+                    : "daily_qt.png";
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+
+            } catch (error) {
+                console.error("Image Download Error:", error);
+                alert("이미지 다운로드에 실패했습니다.");
+            } finally {
+                downloadImageBtn.disabled = false;
+                downloadImageBtn.innerText = "📥 이미지 다운로드 하기";
             }
         });
     </script>

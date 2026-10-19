@@ -236,6 +236,36 @@
             padding: 20px 0;
         }
 
+        .history-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 8px;
+        gap: 10px;
+    }
+
+    .history-page-btn {
+        border: 1px solid #C7D2FE;
+        background: #FFFFFF;
+        color: var(--primary);
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .history-page-btn:disabled {
+        opacity: 0.35;
+        cursor: default;
+    }
+
+    .history-page-info {
+        font-size: 13px;
+        color: var(--text-sub);
+        font-weight: 600;
+    }
+
         .status-msg {
             font-size: 14px;
             color: var(--text-sub);
@@ -371,6 +401,9 @@
 
         const QT_HISTORY_KEY = "dailyQtHistoryV1";
 
+        const HISTORY_PAGE_SIZE = 5;
+        let historyPage = 1;
+
 
         function getKoreaDateKey() {
             const formatter = new Intl.DateTimeFormat("en-CA", {
@@ -499,6 +532,7 @@
 
             if (Array.isArray(data.questions)) {
                 questionText = data.questions
+                    .slice(0, 2)
                     .map((q, idx) => `${idx + 1}. ${q}`)
                     .join("\n\n");
             } else {
@@ -516,63 +550,134 @@
 
 
         function renderHistory() {
-            const history = getQtHistory();
+    const history = getQtHistory();
 
-            const dates = Object.keys(history)
-                .sort()
-                .reverse();
+    const dates = Object.keys(history)
+        .sort()
+        .reverse();
 
-            historyList.replaceChildren();
+    historyList.replaceChildren();
 
-            if (dates.length === 0) {
-                const empty = document.createElement("div");
+    if (dates.length === 0) {
+        const empty = document.createElement("div");
 
-                empty.className = "history-empty";
-                empty.innerText = "아직 저장된 말씀이 없습니다.";
+        empty.className = "history-empty";
+        empty.innerText = "아직 저장된 말씀이 없습니다.";
 
-                historyList.appendChild(empty);
-                return;
-            }
+        historyList.appendChild(empty);
+        return;
+    }
 
-            dates.forEach(date => {
-                const data = history[date];
+    const totalPages = Math.ceil(
+        dates.length / HISTORY_PAGE_SIZE
+    );
 
-                const button = document.createElement("button");
+    if (historyPage > totalPages) {
+        historyPage = totalPages;
+    }
 
-                button.type = "button";
-                button.className = "history-item";
+    if (historyPage < 1) {
+        historyPage = 1;
+    }
 
-                const dateText = document.createElement("span");
+    const startIndex =
+        (historyPage - 1) * HISTORY_PAGE_SIZE;
 
-                dateText.className = "history-date";
-                dateText.innerText = formatDate(date);
+    const endIndex =
+        startIndex + HISTORY_PAGE_SIZE;
 
-                const referenceText = document.createElement("span");
+    const pageDates =
+        dates.slice(startIndex, endIndex);
 
-                referenceText.className = "history-reference";
-                referenceText.innerText = data.reference;
+    pageDates.forEach(date => {
+        const data = history[date];
 
-                button.appendChild(dateText);
-                button.appendChild(referenceText);
+        const button = document.createElement("button");
 
-                button.addEventListener("click", () => {
-                    renderQt(data);
+        button.type = "button";
+        button.className = "history-item";
 
-                    historyPanel.style.display = "none";
-                    topicInput.value = "";
+        const dateText = document.createElement("span");
 
-                    document.getElementById("resultArea").scrollIntoView({
-                        behavior: "smooth",
-                        block: "start"
-                    });
-                });
+        dateText.className = "history-date";
+        dateText.innerText = formatDate(date);
 
-                historyList.appendChild(button);
+        const referenceText = document.createElement("span");
+
+        referenceText.className = "history-reference";
+        referenceText.innerText = data.reference;
+
+        button.appendChild(dateText);
+        button.appendChild(referenceText);
+
+        button.addEventListener("click", () => {
+            renderQt(data);
+
+            historyPanel.style.display = "none";
+            topicInput.value = "";
+
+            document.getElementById("resultArea").scrollIntoView({
+                behavior: "smooth",
+                block: "start"
             });
-        }
+        });
+
+        historyList.appendChild(button);
+    });
+
+    if (totalPages > 1) {
+        const pagination =
+            document.createElement("div");
+
+        pagination.className =
+            "history-pagination";
+
+        const prevBtn =
+            document.createElement("button");
+
+        prevBtn.type = "button";
+        prevBtn.className = "history-page-btn";
+        prevBtn.innerText = "‹ 이전";
+        prevBtn.disabled = historyPage === 1;
+
+        const pageInfo =
+            document.createElement("span");
+
+        pageInfo.className = "history-page-info";
+        pageInfo.innerText =
+            `${historyPage} / ${totalPages}`;
+
+        const nextBtn =
+            document.createElement("button");
+
+        nextBtn.type = "button";
+        nextBtn.className = "history-page-btn";
+        nextBtn.innerText = "다음 ›";
+        nextBtn.disabled =
+            historyPage === totalPages;
+
+        prevBtn.addEventListener("click", () => {
+            historyPage -= 1;
+            renderHistory();
+        });
+
+        nextBtn.addEventListener("click", () => {
+            historyPage += 1;
+            renderHistory();
+        });
+
+        pagination.appendChild(prevBtn);
+        pagination.appendChild(pageInfo);
+        pagination.appendChild(nextBtn);
+
+        historyList.appendChild(pagination);
+    }
+}
 
 
         historyBtn.addEventListener("click", () => {
+            historyPage = 1;
+
             renderHistory();
 
             historyPanel.style.display = "block";
